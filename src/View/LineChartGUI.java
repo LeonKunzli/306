@@ -18,9 +18,9 @@ public class LineChartGUI extends JFrame {
         DefaultCategoryDataset dataset = createDataset();
         // Create chart
         JFreeChart chart = ChartFactory.createLineChart(
-                "Site Traffic", // Chart title
-                "Date", // X-Axis Label
-                "Number of Visitor", // Y-Axis Label
+                "Electricity Monitoring", // Chart title
+                "Zeit in Minuten", // X-Axis Label
+                "KWH", // Y-Axis Label
                 dataset
         );
 
@@ -30,8 +30,8 @@ public class LineChartGUI extends JFrame {
 
     private DefaultCategoryDataset createDataset() {
 
-        String series1 = "Visitor";
-        String series2 = "Unique Visitor";
+        String series1 = "Stromverbrauch";
+        String series2 = "Stromerzeugung";
 
         DefaultCategoryDataset dataset = new DefaultCategoryDataset();
 

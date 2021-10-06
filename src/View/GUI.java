@@ -1,5 +1,7 @@
 package View;
 
+import com.formdev.flatlaf.FlatDarkLaf;
+import com.formdev.flatlaf.FlatIntelliJLaf;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
@@ -9,10 +11,12 @@ import org.jfree.data.time.TimeSeriesCollection;
 import org.jfree.data.xy.XYDataset;
 
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.plaf.basic.BasicArrowButton;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 
@@ -27,7 +31,7 @@ public class GUI extends JFrame {
             example.setDefaultCloseOperation(example.EXIT_ON_CLOSE);
             example.setVisible(true);
             try {
-                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+                UIManager.setLookAndFeel(new FlatIntelliJLaf());
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -62,12 +66,66 @@ public class GUI extends JFrame {
         JPanel radioButtonPanel = new JPanel(new BorderLayout());
         radioButtonPanel.setBackground(new Color(0xFFFFFF));
         radioButtonPanel.setPreferredSize(new Dimension(620,190));
+        JPanel exportPanel = new JPanel(new FlowLayout());
+        exportPanel.setPreferredSize(new Dimension(500, 80));
+        exportPanel.setBackground(new Color(0xFFFFFF));
 
         JButton importButton = new JButton("import files");
+        importButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                JFileChooser chooser = new JFileChooser();
+                chooser.setAcceptAllFileFilterUsed(false);
+                chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+                int dialogReturnValue = chooser.showOpenDialog(null);
+                if(dialogReturnValue==JFileChooser.APPROVE_OPTION){
+                    File file = chooser.getSelectedFile().getAbsoluteFile();
+                    JOptionPane.showMessageDialog(null,
+                            "Imported " + file.getAbsoluteFile());
+                    init();
+                }
+            }
+        });
         importButton.setPreferredSize(new Dimension(500, 80));
-        JButton exportButton = new JButton("export CSV");
-        exportButton.setPreferredSize(new Dimension(500, 80));
+        JButton exportCSVButton = new JButton("export CSV");
+        JButton exportJSONButton = new JButton("export JSON");
+        exportCSVButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                JFileChooser chooser = new JFileChooser();
+                FileNameExtensionFilter csvFilter = new FileNameExtensionFilter("csv files (*.csv)", "csv");
+                chooser.addChoosableFileFilter(csvFilter);
+                chooser.setFileFilter(csvFilter);
+                int dialogReturnValue = chooser.showSaveDialog(null);
+                if(dialogReturnValue==JFileChooser.APPROVE_OPTION){
+                    File file = chooser.getSelectedFile();
+                    if (!file.getName() .endsWith(".csv")){
+                        file = new File(file.toString() + ".csv");
+                    }
+                    System.out.println(file.getAbsoluteFile());
+                    JOptionPane.showMessageDialog(null,
+                            "saved file as " + file.getAbsoluteFile());
+                }
+            }
+        });
+        exportJSONButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                JFileChooser chooser = new JFileChooser();
+                FileNameExtensionFilter jsonFilter = new FileNameExtensionFilter("json files (*.json)", "json");
+                chooser.addChoosableFileFilter(jsonFilter);
+                chooser.setFileFilter(jsonFilter);
+                int dialogReturnValue = chooser.showSaveDialog(null);
+                if(dialogReturnValue==JFileChooser.APPROVE_OPTION){
+                    File file = chooser.getSelectedFile();
+                    if (!file.getName().endsWith(".json")){
+                        file = new File(file.toString() + ".json");
+                    }
+                    JOptionPane.showMessageDialog(null,
+                            "saved file as " + file.getAbsoluteFile());
+                }
+            }
+        });
 
+        exportCSVButton.setPreferredSize(new Dimension(305, 80));
+        exportJSONButton.setPreferredSize(new Dimension(305, 80));
         JRadioButton verbrauchsRadioButton = new JRadioButton("Verbrauchsdiagramm");
         verbrauchsRadioButton.setBackground(new Color(0xFFFFFF));
         verbrauchsRadioButton.setPreferredSize(new Dimension(500, 80));
@@ -87,7 +145,7 @@ public class GUI extends JFrame {
         endDateTextField.setPreferredSize(new Dimension(200, 50));
 
         BasicArrowButton daysWestBasicArrowButton = new BasicArrowButton(BasicArrowButton.WEST);
-        daysWestBasicArrowButton.setPreferredSize(new Dimension(100, 35));
+        daysWestBasicArrowButton.setPreferredSize(new Dimension(100, 350));
         BasicArrowButton daysEastBasicArrowButton = new BasicArrowButton(BasicArrowButton.EAST);
         BasicArrowButton minuteEastBasicArrowButton = new BasicArrowButton(BasicArrowButton.EAST);
         BasicArrowButton minuteWestBasicArrowButton = new BasicArrowButton(BasicArrowButton.WEST);
@@ -107,6 +165,8 @@ public class GUI extends JFrame {
         ImageIcon icon = new ImageIcon("../../Content/133028-200.png");
         JLabel iconLabel = new JLabel(icon, JLabel.CENTER);
 
+        exportPanel.add(exportCSVButton);
+        exportPanel.add(exportJSONButton);
         minutePanel.add(minuteLabel, BorderLayout.CENTER);
         minutePanel.add(minuteEastBasicArrowButton, BorderLayout.EAST);
         minutePanel.add(minuteWestBasicArrowButton, BorderLayout.WEST);
@@ -114,7 +174,7 @@ public class GUI extends JFrame {
         daysPanel.add(daysEastBasicArrowButton, BorderLayout.EAST);
         daysPanel.add(daysWestBasicArrowButton, BorderLayout.WEST);
         importExportPanel.add(importButton, BorderLayout.NORTH);
-        importExportPanel.add(exportButton, BorderLayout.SOUTH);
+        importExportPanel.add(exportPanel, BorderLayout.SOUTH);
         datePanel.add(startDateTextField);
         datePanel.add(iconLabel);
         datePanel.add(endDateTextField);
@@ -189,7 +249,5 @@ public class GUI extends JFrame {
         return dataset;
 
     }
-
-
 }
 

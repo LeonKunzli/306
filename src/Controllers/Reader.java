@@ -26,6 +26,7 @@ import java.util.*;
  * @since 04.10.2021
  */
 public class Reader{
+    private static final int SDAT_STEP_IN_MILLISECONDS = 900000;
     private TreeMap<Integer, Double> absoluteMap;
     private long unixTime;
     private TreeMap<Long, Messwert> richtigeMap;
@@ -91,6 +92,7 @@ public class Reader{
 
     }
     public void readSDAT(String path){
+        //TODO Arbias weiss
         try {
             File folder = new File(path);
             DocumentBuilder builder2 = factory.newDocumentBuilder();
@@ -117,7 +119,7 @@ public class Reader{
                         Element observationElement = (Element) observation;
                         int sequence = Integer.parseInt(observationElement.getElementsByTagName("rsm:Sequence").item(0).getTextContent());
                         double value = Double.parseDouble(observationElement.getElementsByTagName("rsm:Volume").item(0).getTextContent());
-                        unixTime += 900000;
+                        unixTime += SDAT_STEP_IN_MILLISECONDS;
                         if (richtigeMap.get(totalKonstante1) != null) {
                             richtigeMap.put(unixTime, new Messwert(richtigeMap.get(totalKonstante1).getAbsoluterWert(), value));
                         } else {

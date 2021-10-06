@@ -6,6 +6,7 @@ import com.formdev.flatlaf.FlatIntelliJLaf;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.util.StringUtils;
 import org.jfree.data.time.Minute;
 import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
@@ -19,12 +20,12 @@ import java.io.File;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 import java.util.TreeMap;
 
 public class GUI extends JFrame {
-
+    private Reader reader = new Reader();
     public static TreeMap<Long, Messwert> values;
-    private int filesRead = 0;
     private boolean absoluteZahlen = true;
 
     public static void main(String[] args) {
@@ -74,9 +75,30 @@ public class GUI extends JFrame {
         JPanel exportPanel = new JPanel(new FlowLayout());
         exportPanel.setPreferredSize(new Dimension(500, 80));
         exportPanel.setBackground(new Color(0xFFFFFF));
+        JPanel importPanel = new JPanel(new FlowLayout());
+        importPanel.setBackground(new Color(0xFFFFFF));
+        importPanel.setPreferredSize(new Dimension(500,80));
 
-        JButton importButton = new JButton("import files");
-        importButton.addActionListener(e -> {
+        JButton importESLButton = new JButton("Import ESL");
+        importESLButton.addActionListener(e -> {
+            JFileChooser chooser = new JFileChooser();
+            chooser.setAcceptAllFileFilterUsed(false);
+            FileNameExtensionFilter filter = new FileNameExtensionFilter("XML FILES", ".xml", "xml");
+            chooser.setFileFilter(filter);
+
+            int dialogReturnValue = chooser.showOpenDialog(null);
+            if(dialogReturnValue==JFileChooser.APPROVE_OPTION){
+                File file = chooser.getSelectedFile().getAbsoluteFile();
+                System.out.println(file);
+                reader.readESL(file.toString());
+                JOptionPane.showMessageDialog(null,
+                        "Imported new Files.");
+            }
+        });
+        importESLButton.setPreferredSize(new Dimension(305, 80));
+
+        JButton importSDATButton = new JButton("Import SDAT");
+        importSDATButton.addActionListener(e -> {
             JFileChooser chooser = new JFileChooser();
             chooser.setAcceptAllFileFilterUsed(false);
             chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
@@ -84,14 +106,12 @@ public class GUI extends JFrame {
             if(dialogReturnValue==JFileChooser.APPROVE_OPTION){
                 File file = chooser.getSelectedFile().getAbsoluteFile();
                 System.out.println(file);
-                Reader reader = new Reader();
                 reader.readSDAT(file.toString());
-                //todo read files
                 JOptionPane.showMessageDialog(null,
-                        "Imported " + filesRead + " Files.");
+                        "Imported new Files.");
             }
         });
-        importButton.setPreferredSize(new Dimension(500, 80));
+        importSDATButton.setPreferredSize(new Dimension(305, 80));
         JButton exportCSVButton = new JButton("export CSV");
         JButton exportJSONButton = new JButton("export JSON");
         exportCSVButton.addActionListener(e -> {
@@ -184,7 +204,9 @@ public class GUI extends JFrame {
         daysPanel.add(daysLabel, BorderLayout.CENTER);
         daysPanel.add(daysEastBasicArrowButton, BorderLayout.EAST);
         daysPanel.add(daysWestBasicArrowButton, BorderLayout.WEST);
-        importExportPanel.add(importButton, BorderLayout.NORTH);
+        importPanel.add(importESLButton);
+        importPanel.add(importSDATButton);
+        importExportPanel.add(importPanel, BorderLayout.NORTH);
         importExportPanel.add(exportPanel, BorderLayout.SOUTH);
         datePanel.add(startDateTextField);
         datePanel.add(iconLabel);
@@ -233,18 +255,28 @@ public class GUI extends JFrame {
 
     }
 
+   /*
     public void readFoldersRecursively(File folder){
-        String contents[] = folder.list();
-        for (String content : contents) {
-            File temp = new File(content);
-            if (temp.isFile()){
-                if(temp.toString().endsWith(".xml"))
-                    filesRead++;
+        Reader reader = new Reader();
+        File[] contents = new File(folder.getAbsolutePath()).listFiles();
+        for (File content : contents) {
+            System.out.println(content);
+            if (content.isFile()){
+                System.out.println("is file");
+                if(content.toString().endsWith(".xml"))
+                    reader.readESL(content.toString());
             }
-            else if(temp.isDirectory()){
-                readFoldersRecursively(temp);
+            else if(content.isDirectory()){
+                System.out.println("is directory");
+                if(content.getName().toLowerCase().contains("sdat")){
+                       reader.readSDAT(content.toString());
+                }
+                else {
+                    readFoldersRecursively(content);
+                    System.out.println("YEP");
+                }
             }
         }
-    }
+    } */
 }
 

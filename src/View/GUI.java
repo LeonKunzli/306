@@ -1,11 +1,12 @@
 package View;
 
-import com.formdev.flatlaf.FlatDarkLaf;
+import Controllers.Reader;
+import Model.Messwert;
 import com.formdev.flatlaf.FlatIntelliJLaf;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
-import org.jfree.data.time.Month;
+import org.jfree.data.time.Minute;
 import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
 import org.jfree.data.xy.XYDataset;
@@ -14,13 +15,17 @@ import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.plaf.basic.BasicArrowButton;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.TreeMap;
 
 public class GUI extends JFrame {
+
+    public static TreeMap<Long, Messwert> values;
+    private int filesRead = 0;
+    private boolean absoluteZahlen = true;
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
@@ -71,56 +76,53 @@ public class GUI extends JFrame {
         exportPanel.setBackground(new Color(0xFFFFFF));
 
         JButton importButton = new JButton("import files");
-        importButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent e) {
-                JFileChooser chooser = new JFileChooser();
-                chooser.setAcceptAllFileFilterUsed(false);
-                chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-                int dialogReturnValue = chooser.showOpenDialog(null);
-                if(dialogReturnValue==JFileChooser.APPROVE_OPTION){
-                    File file = chooser.getSelectedFile().getAbsoluteFile();
-                    JOptionPane.showMessageDialog(null,
-                            "Imported " + file.getAbsoluteFile());
-                    init();
-                }
+        importButton.addActionListener(e -> {
+            JFileChooser chooser = new JFileChooser();
+            chooser.setAcceptAllFileFilterUsed(false);
+            chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+            int dialogReturnValue = chooser.showOpenDialog(null);
+            if(dialogReturnValue==JFileChooser.APPROVE_OPTION){
+                File file = chooser.getSelectedFile().getAbsoluteFile();
+                System.out.println(file);
+                Reader reader = new Reader();
+                reader.readSDAT(file.toString());
+                //todo read files
+                JOptionPane.showMessageDialog(null,
+                        "Imported " + filesRead + " Files.");
             }
         });
         importButton.setPreferredSize(new Dimension(500, 80));
         JButton exportCSVButton = new JButton("export CSV");
         JButton exportJSONButton = new JButton("export JSON");
-        exportCSVButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent e) {
-                JFileChooser chooser = new JFileChooser();
-                FileNameExtensionFilter csvFilter = new FileNameExtensionFilter("csv files (*.csv)", "csv");
-                chooser.addChoosableFileFilter(csvFilter);
-                chooser.setFileFilter(csvFilter);
-                int dialogReturnValue = chooser.showSaveDialog(null);
-                if(dialogReturnValue==JFileChooser.APPROVE_OPTION){
-                    File file = chooser.getSelectedFile();
-                    if (!file.getName() .endsWith(".csv")){
-                        file = new File(file.toString() + ".csv");
-                    }
-                    System.out.println(file.getAbsoluteFile());
-                    JOptionPane.showMessageDialog(null,
-                            "saved file as " + file.getAbsoluteFile());
+        exportCSVButton.addActionListener(e -> {
+            JFileChooser chooser = new JFileChooser();
+            FileNameExtensionFilter csvFilter = new FileNameExtensionFilter("csv files (*.csv)", "csv");
+            chooser.addChoosableFileFilter(csvFilter);
+            chooser.setFileFilter(csvFilter);
+            int dialogReturnValue = chooser.showSaveDialog(null);
+            if(dialogReturnValue==JFileChooser.APPROVE_OPTION){
+                File file = chooser.getSelectedFile();
+                if (!file.getName() .endsWith(".csv")){
+                    file = new File(file + ".csv");
                 }
+                System.out.println(file.getAbsoluteFile());
+                JOptionPane.showMessageDialog(null,
+                        "saved file as " + file.getAbsoluteFile());
             }
         });
-        exportJSONButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent e) {
-                JFileChooser chooser = new JFileChooser();
-                FileNameExtensionFilter jsonFilter = new FileNameExtensionFilter("json files (*.json)", "json");
-                chooser.addChoosableFileFilter(jsonFilter);
-                chooser.setFileFilter(jsonFilter);
-                int dialogReturnValue = chooser.showSaveDialog(null);
-                if(dialogReturnValue==JFileChooser.APPROVE_OPTION){
-                    File file = chooser.getSelectedFile();
-                    if (!file.getName().endsWith(".json")){
-                        file = new File(file.toString() + ".json");
-                    }
-                    JOptionPane.showMessageDialog(null,
-                            "saved file as " + file.getAbsoluteFile());
+        exportJSONButton.addActionListener(e -> {
+            JFileChooser chooser = new JFileChooser();
+            FileNameExtensionFilter jsonFilter = new FileNameExtensionFilter("json files (*.json)", "json");
+            chooser.addChoosableFileFilter(jsonFilter);
+            chooser.setFileFilter(jsonFilter);
+            int dialogReturnValue = chooser.showSaveDialog(null);
+            if(dialogReturnValue==JFileChooser.APPROVE_OPTION){
+                File file = chooser.getSelectedFile();
+                if (!file.getName().endsWith(".json")){
+                    file = new File(file + ".json");
                 }
+                JOptionPane.showMessageDialog(null,
+                        "saved file as " + file.getAbsoluteFile());
             }
         });
 
@@ -129,9 +131,18 @@ public class GUI extends JFrame {
         JRadioButton verbrauchsRadioButton = new JRadioButton("Verbrauchsdiagramm");
         verbrauchsRadioButton.setBackground(new Color(0xFFFFFF));
         verbrauchsRadioButton.setPreferredSize(new Dimension(500, 80));
+        verbrauchsRadioButton.addActionListener(e -> {
+            absoluteZahlen = false;
+            System.out.println(absoluteZahlen);
+        });
         JRadioButton zählerRadioButton = new JRadioButton("Zählerdiagramm");
         zählerRadioButton.setBackground(new Color(0xFFFFFF));
         zählerRadioButton.setPreferredSize(new Dimension(500, 80));
+        zählerRadioButton.setSelected(true);
+        zählerRadioButton.addActionListener(e -> {
+            absoluteZahlen = true;
+            System.out.println(absoluteZahlen);
+        });
         radioButtonPanel.add(verbrauchsRadioButton, BorderLayout.NORTH);
         radioButtonPanel.add(zählerRadioButton, BorderLayout.SOUTH);
         ButtonGroup radioButtonGroup = new ButtonGroup();
@@ -150,7 +161,7 @@ public class GUI extends JFrame {
         BasicArrowButton minuteEastBasicArrowButton = new BasicArrowButton(BasicArrowButton.EAST);
         BasicArrowButton minuteWestBasicArrowButton = new BasicArrowButton(BasicArrowButton.WEST);
 
-        XYDataset dataset = createDataset();
+        XYDataset dataset = null;//createDataset();
         JFreeChart chart = ChartFactory.createTimeSeriesChart(
                 "Electricity Monitoring", // Chart title
                 "Zeit in Minuten", // X-Axis Label
@@ -192,55 +203,27 @@ public class GUI extends JFrame {
         setContentPane(panel);
     }
 
-    private static XYDataset createDataset() {
+    private XYDataset createDataset(TreeMap<Long, Messwert> verbrauchterStrom, TreeMap<Long, Messwert> erzeugterStrom) {
 
         TimeSeries s1 = new TimeSeries("Verbrauchter Strom");
-        s1.add(new Month(2, 2001), 181.8);
-        s1.add(new Month(3, 2001), 167.3);
-        s1.add(new Month(4, 2001), 153.8);
-        s1.add(new Month(5, 2001), 167.6);
-        s1.add(new Month(6, 2001), 158.8);
-        s1.add(new Month(7, 2001), 148.3);
-        s1.add(new Month(8, 2001), 153.9);
-        s1.add(new Month(9, 2001), 142.7);
-        s1.add(new Month(10, 2001), 123.2);
-        s1.add(new Month(11, 2001), 131.8);
-        s1.add(new Month(12, 2001), 139.6);
-        s1.add(new Month(1, 2002), 142.9);
-        s1.add(new Month(2, 2002), 138.7);
-        s1.add(new Month(3, 2002), 137.3);
-        s1.add(new Month(4, 2002), 143.9);
-        s1.add(new Month(5, 2002), 139.8);
-        s1.add(new Month(6, 2002), 137.0);
-        s1.add(new Month(7, 2002), 132.8);
+        for (Long key : verbrauchterStrom.keySet()) {
+            if(absoluteZahlen) {
+                s1.add(new Minute(new Date(key)), verbrauchterStrom.get(key).getAbsoluterWert());
+            }
+            else{
+                s1.add(new Minute(new Date(key)), verbrauchterStrom.get(key).getRelativerWert());
+            }
+        }
 
         TimeSeries s2 = new TimeSeries("Erzeugter Strom");
-        s2.add(new Month(2, 2001), 129.6);
-        s2.add(new Month(3, 2001), 123.2);
-        s2.add(new Month(4, 2001), 117.2);
-        s2.add(new Month(5, 2001), 124.1);
-        s2.add(new Month(6, 2001), 122.6);
-        s2.add(new Month(7, 2001), 119.2);
-        s2.add(new Month(8, 2001), 116.5);
-        s2.add(new Month(9, 2001), 112.7);
-        s2.add(new Month(10, 2001), 101.5);
-        s2.add(new Month(11, 2001), 106.1);
-        s2.add(new Month(12, 2001), 110.3);
-        s2.add(new Month(1, 2002), 111.7);
-        s2.add(new Month(2, 2002), 111.0);
-        s2.add(new Month(3, 2002), 109.6);
-        s2.add(new Month(4, 2002), 113.2);
-        s2.add(new Month(5, 2002), 111.6);
-        s2.add(new Month(6, 2002), 108.8);
-        s2.add(new Month(7, 2002), 101.6);
-
-        // ******************************************************************
-        //  More than 150 demo applications are included with the JFreeChart
-        //  Developer Guide...for more information, see:
-        //
-        //  >   http://www.object-refinery.com/jfreechart/guide.html
-        //
-        // ******************************************************************
+        for (Long key : erzeugterStrom.keySet()) {
+            if (absoluteZahlen){
+                s2.add(new Minute(new Date(key)), erzeugterStrom.get(key).getAbsoluterWert());
+            }
+            else{
+                s2.add(new Minute(new Date(key)), erzeugterStrom.get(key).getRelativerWert());
+            }
+        }
 
         TimeSeriesCollection dataset = new TimeSeriesCollection();
         dataset.addSeries(s1);
@@ -248,6 +231,20 @@ public class GUI extends JFrame {
 
         return dataset;
 
+    }
+
+    public void readFoldersRecursively(File folder){
+        String contents[] = folder.list();
+        for (String content : contents) {
+            File temp = new File(content);
+            if (temp.isFile()){
+                if(temp.toString().endsWith(".xml"))
+                    filesRead++;
+            }
+            else if(temp.isDirectory()){
+                readFoldersRecursively(temp);
+            }
+        }
     }
 }
 

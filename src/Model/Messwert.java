@@ -10,24 +10,24 @@ import java.awt.geom.QuadCurve2D;
  * @since 05.10.2021
  */
 public class Messwert{
-    private double abosluterWert;
+    private double absoluterWert;
     private double relativerWert;
 
-    public Messwert(double abosluterWert, double relativerWert){
-        this.abosluterWert = abosluterWert;
+    public Messwert(double absoluterWert, double relativerWert){
+        this.absoluterWert = absoluterWert;
         this.relativerWert = relativerWert;
     }
 
     public double getAbsoluterWert() {
-        return abosluterWert;
+        return absoluterWert;
     }
 
     public double getRelativerWert() {
         return relativerWert;
     }
 
-    public void setAbosluterWert(double abosluterWert) {
-        this.abosluterWert = abosluterWert;
+    public void setAbsoluterWert(double absoluterWert) {
+        this.absoluterWert = absoluterWert;
     }
 
     public void setRelativerWert(double relativerWert) {
@@ -37,7 +37,7 @@ public class Messwert{
     @Override
     public String toString() {
         return "Messwerte{" +
-                "abosluterWert=" + abosluterWert +
+                "absoluterWert=" + absoluterWert +
                 ", relativerWert=" + relativerWert +
                 '}';
     }

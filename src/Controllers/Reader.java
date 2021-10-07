@@ -1,6 +1,5 @@
 package Controllers;
 import Model.Messwert;
-import View.GUI;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -26,6 +25,8 @@ import java.util.*;
  * @since 04.10.2021
  */
 public class Reader{
+    private boolean hasSDAT = false;
+    private boolean hasESL = false;
     private static final int SDAT_STEP_IN_MILLISECONDS = 900000;
     private TreeMap<Integer, Double> absoluteMap;
     private long unixTime;
@@ -35,11 +36,8 @@ public class Reader{
     private final Long totalKonstante1 = 1551394800000L;
     private DocumentBuilderFactory factory;
 
-    public
-
-
         //ESL
-    Reader() {
+    public Reader() {
         fileVector = new Vector<>();
         absoluteMap = new TreeMap<>();
         richtigeMap = new TreeMap<>();
@@ -75,7 +73,7 @@ public class Reader{
             richtigeMap.put(unixTime, new Messwert(gesamtZahl, 0.0));
 
 
-
+            hasESL = true;
             System.out.println(richtigeMap);
 
         }catch (ParserConfigurationException e) {
@@ -111,7 +109,7 @@ public class Reader{
                 String dateS = timeElement.getElementsByTagName("rsm:StartDateTime").item(0).getTextContent();
                 DateFormat dateFormatFuerneu = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
                 Date dateFuerDataS = dateFormatFuerneu.parse(dateS);
-                unixTime = (long) dateFuerDataS.getTime();
+                unixTime = dateFuerDataS.getTime();
 
                 for (int j = 0; j < observationsList.getLength(); j++) {
                     Node observation = observationsList.item(j);
@@ -130,14 +128,20 @@ public class Reader{
                 }
 
             }
+            double temp = richtigeMap.get(totalKonstante1).getAbsoluterWert();
             for (Map.Entry<Long, Messwert> entry : richtigeMap.entrySet()) {
                 long key = entry.getKey();
                 Messwert value = entry.getValue();
                 if (totalKonstante1 <= key) {
                     double erstezZahl = richtigeMap.get(totalKonstante1).getAbsoluterWert();
-                    value.setAbosluterWert(erstezZahl + value.getRelativerWert());
+                    temp += value.getRelativerWert();
+                    value.setAbsoluterWert(temp);
+                    System.out.println(value.getAbsoluterWert());
+                    System.out.println(value + " AAAAAAAAAAAAAAAAAAAAAA " + erstezZahl);
                 }
             }
+            hasSDAT = true;
+            System.out.println(temp);
         }catch (IOException e) {
             e.printStackTrace();
         } catch (ParseException e) {
@@ -147,6 +151,26 @@ public class Reader{
         } catch (ParserConfigurationException e) {
             e.printStackTrace();
         }
-        System.out.println(richtigeMap);
+        //System.out.println(richtigeMap);
+    }
+
+    public void setHasSDAT(boolean hasSDAT) {
+        this.hasSDAT = hasSDAT;
+    }
+
+    public void setHasESL(boolean hasESL) {
+        this.hasESL = hasESL;
+    }
+
+    public boolean isHasSDAT() {
+        return hasSDAT;
+    }
+
+    public boolean isHasESL() {
+        return hasESL;
+    }
+
+    public TreeMap<Long, Messwert> getRichtigeMap() {
+        return richtigeMap;
     }
 }

@@ -3,6 +3,7 @@ package View;
 import Controllers.Reader;
 import Model.Messwert;
 import com.formdev.flatlaf.FlatIntelliJLaf;
+import org.jdesktop.swingx.JXDatePicker;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
@@ -16,15 +17,24 @@ import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.plaf.basic.BasicArrowButton;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.File;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+import java.util.Observable;
 import java.util.TreeMap;
 
 public class GUI extends JFrame {
     private Reader reader = new Reader();
+    private JFreeChart chart = ChartFactory.createTimeSeriesChart(
+            "Electricity Monitoring", // Chart title
+            "Zeit in Minuten", // X-Axis Label
+            "KWH", // Y-Axis Label
+            null
+    );
     public static TreeMap<Long, Messwert> values;
     private boolean absoluteZahlen = true;
 
@@ -63,12 +73,6 @@ public class GUI extends JFrame {
         JPanel ePanel = new JPanel(new BorderLayout());
         ePanel.setBackground(new Color(0xFFFFFF));
         ePanel.setPreferredSize(new Dimension(620, 190));
-        JPanel timeButtonPanel = new JPanel(new FlowLayout());
-        timeButtonPanel.setBackground(new Color(0xFFFFFF));
-        timeButtonPanel.setPreferredSize(new Dimension(500, 80));
-        JPanel datePanel = new JPanel(new FlowLayout());
-        datePanel.setBackground(new Color(0xFFFFFF));
-        datePanel.setPreferredSize(new Dimension(500, 80));
         JPanel radioButtonPanel = new JPanel(new BorderLayout());
         radioButtonPanel.setBackground(new Color(0xFFFFFF));
         radioButtonPanel.setPreferredSize(new Dimension(620,190));
@@ -78,8 +82,25 @@ public class GUI extends JFrame {
         JPanel importPanel = new JPanel(new FlowLayout());
         importPanel.setBackground(new Color(0xFFFFFF));
         importPanel.setPreferredSize(new Dimension(500,80));
-
+        ChartPanel chartPanel = new ChartPanel(chart);
         JButton importESLButton = new JButton("Import ESL");
+        JPanel skipPanel = new JPanel(new FlowLayout());
+        skipPanel.setBackground(new Color(0xFFFFFF));
+        JPanel datePickerPanel = new JPanel(new FlowLayout());
+        datePickerPanel.setBackground(new Color(0xFFFFFF));
+        JXDatePicker startDatePicker = new JXDatePicker();
+        JXDatePicker endDatePicker = new JXDatePicker();
+        JButton submitDatePicker = new JButton("Apply");
+        submitDatePicker.addActionListener(e ->{
+            if(startDatePicker.getDate()!=null || endDatePicker.getDate()!=null) {
+                setTime(startDatePicker.getDate().getTime(), endDatePicker.getDate().getTime());
+            }
+            else{
+                JOptionPane.showMessageDialog(null,
+                        "Bitte geben wählen Sie ein Datum aus.", "Warnung", JOptionPane.WARNING_MESSAGE);
+
+            }
+        });
         importESLButton.addActionListener(e -> {
             JFileChooser chooser = new JFileChooser();
             chooser.setAcceptAllFileFilterUsed(false);
@@ -93,22 +114,48 @@ public class GUI extends JFrame {
                 reader.readESL(file.toString());
                 JOptionPane.showMessageDialog(null,
                         "Imported new Files.");
+                XYDataset dataset = createDataset(reader.getRichtigeMap(), null);
+                chart = ChartFactory.createTimeSeriesChart(
+                        "Electricity Monitoring", // Chart title
+                        "Zeit in Minuten", // X-Axis Label
+                        "KWH", // Y-Axis Label
+                        dataset
+                );
+                chart.setBackgroundPaint(new Color(0xFFFFFF));
+                chart.fireChartChanged();
+                chartPanel.setChart(chart);
             }
-        });
-        importESLButton.setPreferredSize(new Dimension(305, 80));
 
+    });
+        importESLButton.setPreferredSize(new Dimension(305, 80));
         JButton importSDATButton = new JButton("Import SDAT");
         importSDATButton.addActionListener(e -> {
-            JFileChooser chooser = new JFileChooser();
-            chooser.setAcceptAllFileFilterUsed(false);
-            chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-            int dialogReturnValue = chooser.showOpenDialog(null);
-            if(dialogReturnValue==JFileChooser.APPROVE_OPTION){
-                File file = chooser.getSelectedFile().getAbsoluteFile();
-                System.out.println(file);
-                reader.readSDAT(file.toString());
+            if(reader.isHasESL()) {
+                JFileChooser chooser = new JFileChooser();
+                chooser.setAcceptAllFileFilterUsed(false);
+                chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+                int dialogReturnValue = chooser.showOpenDialog(null);
+                if (dialogReturnValue == JFileChooser.APPROVE_OPTION) {
+                    File file = chooser.getSelectedFile().getAbsoluteFile();
+                    System.out.println(file);
+                    reader.readSDAT(file.toString());
+                    JOptionPane.showMessageDialog(null,
+                            "Imported new Files.");
+                    XYDataset dataset = createDataset(reader.getRichtigeMap(), null);
+                    chart = ChartFactory.createTimeSeriesChart(
+                            "Electricity Monitoring", // Chart title
+                            "Zeit in Minuten", // X-Axis Label
+                            "KWH", // Y-Axis Label
+                            dataset
+                    );
+                    chart.setBackgroundPaint(new Color(0xFFFFFF));
+                    chart.fireChartChanged();
+                    chartPanel.setChart(chart);
+                }
+            }
+            else {
                 JOptionPane.showMessageDialog(null,
-                        "Imported new Files.");
+                        "Bitte importieren Sie ESL zuerst.", "Warnung", JOptionPane.WARNING_MESSAGE);
             }
         });
         importSDATButton.setPreferredSize(new Dimension(305, 80));
@@ -153,7 +200,16 @@ public class GUI extends JFrame {
         verbrauchsRadioButton.setPreferredSize(new Dimension(500, 80));
         verbrauchsRadioButton.addActionListener(e -> {
             absoluteZahlen = false;
-            System.out.println(absoluteZahlen);
+            XYDataset dataset = createDataset(reader.getRichtigeMap(), null);
+            chart = ChartFactory.createTimeSeriesChart(
+                    "Electricity Monitoring", // Chart title
+                    "Zeit in Minuten", // X-Axis Label
+                    "KWH", // Y-Axis Label
+                    dataset
+            );
+            chart.setBackgroundPaint(new Color(0xFFFFFF));
+            chart.fireChartChanged();
+            chartPanel.setChart(chart);
         });
         JRadioButton zählerRadioButton = new JRadioButton("Zählerdiagramm");
         zählerRadioButton.setBackground(new Color(0xFFFFFF));
@@ -161,41 +217,58 @@ public class GUI extends JFrame {
         zählerRadioButton.setSelected(true);
         zählerRadioButton.addActionListener(e -> {
             absoluteZahlen = true;
-            System.out.println(absoluteZahlen);
+            XYDataset dataset = createDataset(reader.getRichtigeMap(), null);
+            chart = ChartFactory.createTimeSeriesChart(
+                    "Electricity Monitoring", // Chart title
+                    "Zeit in Minuten", // X-Axis Label
+                    "KWH", // Y-Axis Label
+                    dataset
+            );
+            chart.setBackgroundPaint(new Color(0xFFFFFF));
+            chart.fireChartChanged();
+            chartPanel.setChart(chart);
         });
         radioButtonPanel.add(verbrauchsRadioButton, BorderLayout.NORTH);
         radioButtonPanel.add(zählerRadioButton, BorderLayout.SOUTH);
         ButtonGroup radioButtonGroup = new ButtonGroup();
         radioButtonGroup.add(verbrauchsRadioButton);
         radioButtonGroup.add(zählerRadioButton);
-
+        JButton zoomInButton = new JButton("Zoom in");
         DateFormat dateFormat = new SimpleDateFormat("^\\d{4}\\-(0?[1-9]|1[012])\\-(0?[1-9]|[12][0-9]|3[01])$");
         JFormattedTextField startDateTextField = new JFormattedTextField(dateFormat);
         startDateTextField.setPreferredSize(new Dimension(200, 50));
         JFormattedTextField endDateTextField = new JFormattedTextField(dateFormat);
         endDateTextField.setPreferredSize(new Dimension(200, 50));
-
         BasicArrowButton daysWestBasicArrowButton = new BasicArrowButton(BasicArrowButton.WEST);
-        daysWestBasicArrowButton.setPreferredSize(new Dimension(100, 350));
+        daysWestBasicArrowButton.addActionListener(e -> {
+            addTimeOffset(-(24*60*60*1000));
+        });
         BasicArrowButton daysEastBasicArrowButton = new BasicArrowButton(BasicArrowButton.EAST);
+        daysEastBasicArrowButton.addActionListener(e -> {
+            addTimeOffset(24*60*60*1000);
+        });
         BasicArrowButton minuteEastBasicArrowButton = new BasicArrowButton(BasicArrowButton.EAST);
+        minuteEastBasicArrowButton.addActionListener(e -> {
+            addTimeOffset(15*60*1000);
+        });
         BasicArrowButton minuteWestBasicArrowButton = new BasicArrowButton(BasicArrowButton.WEST);
+        minuteWestBasicArrowButton.addActionListener(e -> {
+            addTimeOffset(-(15*60*1000));
+        });
+        XYDataset dataset = createDataset(reader.getRichtigeMap(), null);
 
-        XYDataset dataset = null;//createDataset();
-        JFreeChart chart = ChartFactory.createTimeSeriesChart(
-                "Electricity Monitoring", // Chart title
-                "Zeit in Minuten", // X-Axis Label
-                "KWH", // Y-Axis Label
-                dataset
-        );
         JLabel minuteLabel = new JLabel("15 Minuten");
-        minuteLabel.setPreferredSize(new Dimension(300, 35));
+        minuteLabel.setPreferredSize(new Dimension(150, 35));
         JLabel daysLabel = new JLabel("1 Tag");
-        daysLabel.setPreferredSize(new Dimension(300, 35));
-        ChartPanel chartPanel = new ChartPanel(chart);
+        daysLabel.setPreferredSize(new Dimension(150, 35));
         ImageIcon icon = new ImageIcon("../../Content/133028-200.png");
         JLabel iconLabel = new JLabel(icon, JLabel.CENTER);
 
+
+        datePickerPanel.add(startDatePicker);
+        datePickerPanel.add(iconLabel);
+        datePickerPanel.add(endDatePicker);
+        datePickerPanel.add(submitDatePicker);
         exportPanel.add(exportCSVButton);
         exportPanel.add(exportJSONButton);
         minutePanel.add(minuteLabel, BorderLayout.CENTER);
@@ -204,17 +277,14 @@ public class GUI extends JFrame {
         daysPanel.add(daysLabel, BorderLayout.CENTER);
         daysPanel.add(daysEastBasicArrowButton, BorderLayout.EAST);
         daysPanel.add(daysWestBasicArrowButton, BorderLayout.WEST);
+        skipPanel.add(daysPanel);
+        skipPanel.add(minutePanel);
         importPanel.add(importESLButton);
         importPanel.add(importSDATButton);
         importExportPanel.add(importPanel, BorderLayout.NORTH);
         importExportPanel.add(exportPanel, BorderLayout.SOUTH);
-        datePanel.add(startDateTextField);
-        datePanel.add(iconLabel);
-        datePanel.add(endDateTextField);
-        timeButtonPanel.add(minutePanel);
-        timeButtonPanel.add(daysPanel);
-        ePanel.add(datePanel, BorderLayout.NORTH);
-        ePanel.add(timeButtonPanel, BorderLayout.SOUTH);
+        ePanel.add(datePickerPanel, BorderLayout.NORTH);
+        ePanel.add(skipPanel, BorderLayout.SOUTH);
         nPanel.add(importExportPanel);
         nPanel.add(radioButtonPanel);
         nPanel.add(ePanel);
@@ -230,53 +300,37 @@ public class GUI extends JFrame {
         TimeSeries s1 = new TimeSeries("Verbrauchter Strom");
         for (Long key : verbrauchterStrom.keySet()) {
             if(absoluteZahlen) {
-                s1.add(new Minute(new Date(key)), verbrauchterStrom.get(key).getAbsoluterWert());
+                s1.addOrUpdate(new Minute(new Date(key)), verbrauchterStrom.get(key).getAbsoluterWert());
             }
             else{
-                s1.add(new Minute(new Date(key)), verbrauchterStrom.get(key).getRelativerWert());
+                s1.addOrUpdate(new Minute(new Date(key)), verbrauchterStrom.get(key).getRelativerWert());
             }
         }
 
         TimeSeries s2 = new TimeSeries("Erzeugter Strom");
-        for (Long key : erzeugterStrom.keySet()) {
-            if (absoluteZahlen){
-                s2.add(new Minute(new Date(key)), erzeugterStrom.get(key).getAbsoluterWert());
-            }
-            else{
-                s2.add(new Minute(new Date(key)), erzeugterStrom.get(key).getRelativerWert());
+        if(erzeugterStrom!=null) {
+            for (Long key : erzeugterStrom.keySet()) {
+                if (absoluteZahlen) {
+                    s2.addOrUpdate(new Minute(new Date(key)), erzeugterStrom.get(key).getAbsoluterWert());
+                } else {
+                    s2.addOrUpdate(new Minute(new Date(key)), erzeugterStrom.get(key).getRelativerWert());
+                }
             }
         }
-
         TimeSeriesCollection dataset = new TimeSeriesCollection();
         dataset.addSeries(s1);
         dataset.addSeries(s2);
 
         return dataset;
-
     }
 
-   /*
-    public void readFoldersRecursively(File folder){
-        Reader reader = new Reader();
-        File[] contents = new File(folder.getAbsolutePath()).listFiles();
-        for (File content : contents) {
-            System.out.println(content);
-            if (content.isFile()){
-                System.out.println("is file");
-                if(content.toString().endsWith(".xml"))
-                    reader.readESL(content.toString());
-            }
-            else if(content.isDirectory()){
-                System.out.println("is directory");
-                if(content.getName().toLowerCase().contains("sdat")){
-                       reader.readSDAT(content.toString());
-                }
-                else {
-                    readFoldersRecursively(content);
-                    System.out.println("YEP");
-                }
-            }
-        }
-    } */
+    private void addTimeOffset(double offset){
+        setTime(chart.getXYPlot().getDomainAxis().getLowerBound()+offset, chart.getXYPlot().getDomainAxis().getUpperBound()+offset);
+    }
+
+    private void setTime(double startTime, double endTime){
+        chart.getXYPlot().getDomainAxis().setUpperBound(endTime);
+        chart.getXYPlot().getDomainAxis().setLowerBound(startTime);
+    }
 }
 

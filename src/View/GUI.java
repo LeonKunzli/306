@@ -116,7 +116,7 @@ public class GUI extends JFrame {
                 reader.readESL(file.toString());
                 JOptionPane.showMessageDialog(null,
                         "Imported new Files.");
-                XYDataset dataset = createDataset(reader.getRichtigeMap(), null);
+                XYDataset dataset = createDataset(reader.getVerbrauchMap(), reader.getErzeugungMap());
                 chart = ChartFactory.createTimeSeriesChart(
                         "Electricity Monitoring", // Chart title
                         "Zeit in Minuten", // X-Axis Label
@@ -143,7 +143,7 @@ public class GUI extends JFrame {
                     reader.readSDAT(file.toString());
                     JOptionPane.showMessageDialog(null,
                             "Imported new Files.");
-                    XYDataset dataset = createDataset(reader.getRichtigeMap(), null);
+                    XYDataset dataset = createDataset(reader.getVerbrauchMap(), reader.getErzeugungMap());
                     chart = ChartFactory.createTimeSeriesChart(
                             "Electricity Monitoring", // Chart title
                             "Zeit in Minuten", // X-Axis Label
@@ -216,7 +216,7 @@ public class GUI extends JFrame {
         verbrauchsRadioButton.setPreferredSize(new Dimension(500, 80));
         verbrauchsRadioButton.addActionListener(e -> {
             absoluteZahlen = false;
-            XYDataset dataset = createDataset(reader.getRichtigeMap(), null);
+            XYDataset dataset = createDataset(reader.getVerbrauchMap(), reader.getErzeugungMap());
             chart = ChartFactory.createTimeSeriesChart(
                     "Electricity Monitoring", // Chart title
                     "Zeit in Minuten", // X-Axis Label
@@ -233,7 +233,7 @@ public class GUI extends JFrame {
         zählerRadioButton.setSelected(true);
         zählerRadioButton.addActionListener(e -> {
             absoluteZahlen = true;
-            XYDataset dataset = createDataset(reader.getRichtigeMap(), null);
+            XYDataset dataset = createDataset(reader.getVerbrauchMap(), reader.getErzeugungMap());
             chart = ChartFactory.createTimeSeriesChart(
                     "Electricity Monitoring", // Chart title
                     "Zeit in Minuten", // X-Axis Label

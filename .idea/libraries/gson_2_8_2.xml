@@ -1,7 +1,7 @@
 <component name="libraryTable">
-  <library name="flatlaf-1.6">
+  <library name="gson-2.8.2">
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/Content/flatlaf-1.6.jar!/" />
+      <root url="jar://$PROJECT_DIR$/Content/gson-2.8.2.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

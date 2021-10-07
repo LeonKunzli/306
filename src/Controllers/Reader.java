@@ -1,9 +1,9 @@
 package Controllers;
 import Model.Messwert;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
+import com.formdev.flatlaf.json.Json;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import org.w3c.dom.*;
 import org.xml.sax.SAXException;
 
 
@@ -11,6 +11,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -30,17 +31,18 @@ public class Reader{
     private static final int SDAT_STEP_IN_MILLISECONDS = 900000;
     private TreeMap<Integer, Double> absoluteMap;
     private long unixTime;
-    private TreeMap<Long, Messwert> richtigeMap;
+    private TreeMap<Long, Messwert> erzeugungMap;
     private double gesamtZahl;
     private Vector<File> fileVector;
     private final Long totalKonstante1 = 1551394800000L;
     private DocumentBuilderFactory factory;
+    private TreeMap<Long, Messwert> verbrauchMap;
 
         //ESL
     public Reader() {
         fileVector = new Vector<>();
         absoluteMap = new TreeMap<>();
-        richtigeMap = new TreeMap<>();
+        erzeugungMap = new TreeMap<>();
         factory = DocumentBuilderFactory.newInstance();
     }
     public void readESL(String path){
@@ -70,11 +72,11 @@ public class Reader{
                 }
             }
             gesamtZahl = absoluteMap.get(2) + absoluteMap.get(3);
-            richtigeMap.put(unixTime, new Messwert(gesamtZahl, 0.0));
+            erzeugungMap.put(unixTime, new Messwert(gesamtZahl, 0.0));
 
 
             hasESL = true;
-            System.out.println(richtigeMap);
+            System.out.println(erzeugungMap);
 
         }catch (ParserConfigurationException e) {
             e.printStackTrace();
@@ -118,26 +120,25 @@ public class Reader{
                         int sequence = Integer.parseInt(observationElement.getElementsByTagName("rsm:Sequence").item(0).getTextContent());
                         double value = Double.parseDouble(observationElement.getElementsByTagName("rsm:Volume").item(0).getTextContent());
                         unixTime += SDAT_STEP_IN_MILLISECONDS;
-                        if (richtigeMap.get(totalKonstante1) != null) {
-                            richtigeMap.put(unixTime, new Messwert(richtigeMap.get(totalKonstante1).getAbsoluterWert(), value));
+                        if (erzeugungMap.get(totalKonstante1) != null) {
+                            erzeugungMap.put(unixTime, new Messwert(erzeugungMap.get(totalKonstante1).getAbsoluterWert(), value));
                         } else {
-                            richtigeMap.put(unixTime, new Messwert(0, value));
+                            erzeugungMap.put(unixTime, new Messwert(0, value));
 
                         }
                     }
                 }
 
             }
-            double temp = richtigeMap.get(totalKonstante1).getAbsoluterWert();
-            for (Map.Entry<Long, Messwert> entry : richtigeMap.entrySet()) {
+            double temp = erzeugungMap.get(totalKonstante1).getAbsoluterWert();
+            for (Map.Entry<Long, Messwert> entry : erzeugungMap.entrySet()) {
                 long key = entry.getKey();
                 Messwert value = entry.getValue();
                 if (totalKonstante1 <= key) {
-                    double erstezZahl = richtigeMap.get(totalKonstante1).getAbsoluterWert();
+                    double erstezZahl = erzeugungMap.get(totalKonstante1).getAbsoluterWert();
                     temp += value.getRelativerWert();
                     value.setAbsoluterWert(temp);
                     System.out.println(value.getAbsoluterWert());
-                    System.out.println(value + " AAAAAAAAAAAAAAAAAAAAAA " + erstezZahl);
                 }
             }
             hasSDAT = true;
@@ -151,7 +152,13 @@ public class Reader{
         } catch (ParserConfigurationException e) {
             e.printStackTrace();
         }
-        //System.out.println(richtigeMap);
+        //System.out.println(erzeugungMap);
+    }
+
+    public void exportJSON(String path) throws IOException {
+        Gson gson = new Gson();
+        FileWriter fileWriter = new FileWriter(path);
+        fileWriter.write(gson.toJson(gson.toJson(erzeugungMap)));
     }
 
     public void setHasSDAT(boolean hasSDAT) {
@@ -170,7 +177,7 @@ public class Reader{
         return hasESL;
     }
 
-    public TreeMap<Long, Messwert> getRichtigeMap() {
-        return richtigeMap;
+    public TreeMap<Long, Messwert> getErzeugungMap() {
+        return erzeugungMap;
     }
 }

@@ -7,7 +7,6 @@ import org.jdesktop.swingx.JXDatePicker;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
-import org.jfree.chart.util.StringUtils;
 import org.jfree.data.time.Minute;
 import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
@@ -17,16 +16,20 @@ import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.plaf.basic.BasicArrowButton;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
+import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Locale;
-import java.util.Observable;
 import java.util.TreeMap;
 
+/**
+ * 306
+ *
+ * @author Léon Künzli
+ * @version 0.18
+ * @since 07.10.2021
+ */
 public class GUI extends JFrame {
     private Reader reader = new Reader();
     private JFreeChart chart = ChartFactory.createTimeSeriesChart(
@@ -35,7 +38,6 @@ public class GUI extends JFrame {
             "KWH", // Y-Axis Label
             null
     );
-    public static TreeMap<Long, Messwert> values;
     private boolean absoluteZahlen = true;
 
     public static void main(String[] args) {
@@ -178,19 +180,33 @@ public class GUI extends JFrame {
             }
         });
         exportJSONButton.addActionListener(e -> {
-            JFileChooser chooser = new JFileChooser();
-            FileNameExtensionFilter jsonFilter = new FileNameExtensionFilter("json files (*.json)", "json");
-            chooser.addChoosableFileFilter(jsonFilter);
-            chooser.setFileFilter(jsonFilter);
-            int dialogReturnValue = chooser.showSaveDialog(null);
-            if(dialogReturnValue==JFileChooser.APPROVE_OPTION){
-                File file = chooser.getSelectedFile();
-                if (!file.getName().endsWith(".json")){
-                    file = new File(file + ".json");
+                if(reader.isHasSDAT()) {
+                    JFileChooser chooser = new JFileChooser();
+                    FileNameExtensionFilter jsonFilter = new FileNameExtensionFilter("json files (*.json)", "json");
+                    chooser.addChoosableFileFilter(jsonFilter);
+                    chooser.setFileFilter(jsonFilter);
+                    int dialogReturnValue = chooser.showSaveDialog(null);
+                    if(dialogReturnValue==JFileChooser.APPROVE_OPTION) {
+                        File file = chooser.getSelectedFile();
+                        if (!file.getName().endsWith(".json")) {
+                            file = new File(file + ".json");
+                        }
+                        try {
+                            reader.exportJSON(file.toString());
+                        } catch (IOException ex) {
+                            ex.printStackTrace();
+                            JOptionPane.showMessageDialog(null,
+                                    "Etwas ist schief gegangen.", "Warnung", JOptionPane.WARNING_MESSAGE);
+                        }
+                        JOptionPane.showMessageDialog(null,
+                                "saved file as " + file.getAbsoluteFile());
+                    }
                 }
-                JOptionPane.showMessageDialog(null,
-                        "saved file as " + file.getAbsoluteFile());
-            }
+                else {
+                    JOptionPane.showMessageDialog(null,
+                            "Bitte fügen Sie ESL und SDAT Daten ein.", "Warnung", JOptionPane.WARNING_MESSAGE);
+                }
+
         });
 
         exportCSVButton.setPreferredSize(new Dimension(305, 80));
@@ -233,29 +249,19 @@ public class GUI extends JFrame {
         ButtonGroup radioButtonGroup = new ButtonGroup();
         radioButtonGroup.add(verbrauchsRadioButton);
         radioButtonGroup.add(zählerRadioButton);
-        JButton zoomInButton = new JButton("Zoom in");
         DateFormat dateFormat = new SimpleDateFormat("^\\d{4}\\-(0?[1-9]|1[012])\\-(0?[1-9]|[12][0-9]|3[01])$");
         JFormattedTextField startDateTextField = new JFormattedTextField(dateFormat);
         startDateTextField.setPreferredSize(new Dimension(200, 50));
         JFormattedTextField endDateTextField = new JFormattedTextField(dateFormat);
         endDateTextField.setPreferredSize(new Dimension(200, 50));
         BasicArrowButton daysWestBasicArrowButton = new BasicArrowButton(BasicArrowButton.WEST);
-        daysWestBasicArrowButton.addActionListener(e -> {
-            addTimeOffset(-(24*60*60*1000));
-        });
+        daysWestBasicArrowButton.addActionListener(e -> addTimeOffset(-(24*60*60*1000)));
         BasicArrowButton daysEastBasicArrowButton = new BasicArrowButton(BasicArrowButton.EAST);
-        daysEastBasicArrowButton.addActionListener(e -> {
-            addTimeOffset(24*60*60*1000);
-        });
+        daysEastBasicArrowButton.addActionListener(e -> addTimeOffset(24*60*60*1000));
         BasicArrowButton minuteEastBasicArrowButton = new BasicArrowButton(BasicArrowButton.EAST);
-        minuteEastBasicArrowButton.addActionListener(e -> {
-            addTimeOffset(15*60*1000);
-        });
+        minuteEastBasicArrowButton.addActionListener(e -> addTimeOffset(15*60*1000));
         BasicArrowButton minuteWestBasicArrowButton = new BasicArrowButton(BasicArrowButton.WEST);
-        minuteWestBasicArrowButton.addActionListener(e -> {
-            addTimeOffset(-(15*60*1000));
-        });
-        XYDataset dataset = createDataset(reader.getRichtigeMap(), null);
+        minuteWestBasicArrowButton.addActionListener(e -> addTimeOffset(-(15*60*1000)));
 
         JLabel minuteLabel = new JLabel("15 Minuten");
         minuteLabel.setPreferredSize(new Dimension(150, 35));

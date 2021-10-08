@@ -39,22 +39,26 @@ import java.util.stream.Stream;
  * @since 04.10.2021
  */
 public class Reader{
-    private boolean hasSDAT = false;
-    private boolean hasESL = false;
-    private static final int SDAT_STEP_IN_MILLISECONDS = 900000;
-    private TreeMap<Integer, Double> absoluteMap;
-    private TreeMap<Integer, Double> abosulteMap2;
-    private long unixTime;
-    private TreeMap<Long, Messwert> erzeugungMap;
-    private TreeMap<Long, Messwert> verbrauchMap;
-    private double gesamtZahl;
-    private Vector<File> fileVector;
-    private final Long totalKonstante1 = 1551394800000L;
-    private DocumentBuilderFactory factory;
-    private String id;
+    private boolean hasSDAT = false; //Boolean, der kontrolliert, ob bereits SDAT und ESL FIles importiert wurden
+    private boolean hasESL = false; //Boolean, der kontrolliert, ob bereits SDAT und ESL FIles importiert wurden
+    private static final int SDAT_STEP_IN_MILLISECONDS = 900000; //15 Minuten in UNixTime
+    private TreeMap<Integer, Double> absoluteMap;  //Um den Absolutwert 1 auszurechnen
+    private TreeMap<Integer, Double> abosulteMap2;  //Um den Absolutwert 2 auszurechnen
+    private long unixTime;  //Variable für UNIXTIME
+    private TreeMap<Long, Messwert> erzeugungMap;  //ErzeugerMap, in den Daten der Erzeugung von Strom gespeichert werden
+    private TreeMap<Long, Messwert> verbrauchMap;  //VerbrauchsMap, in den Daten der Verbrauchung von Strom gespeichert werden
+    private double gesamtZahl;  //Ist notwendig für die Berechnung
+    private Vector<File> fileVector; //Der Vector, in dem man alle SDAT-Files speichert
+    private final Long totalKonstante1 = 1551394800000L;  //Absolutkonstante
+    private DocumentBuilderFactory factory; //Ist ein Referenz zu der Klasse DocumentBuilderFactory
+    private String id;  //Ist ein Attribut, in dem die ID der SDAT-FIles gespeichert wird.
 
 
     //ESL
+
+    /**
+     * Konstruktor für den Reader
+     */
     public Reader() {
         fileVector = new Vector<>();
         absoluteMap = new TreeMap<>();
@@ -63,6 +67,11 @@ public class Reader{
         verbrauchMap = new TreeMap<>();
         factory = DocumentBuilderFactory.newInstance();
     }
+
+    /**
+     * liest das ESL File
+     * @param path ist der Path für das ESL File
+     */
     public void readESL(String path){
         try {
             File file = new File(path);
@@ -113,6 +122,11 @@ public class Reader{
 
 
     }
+
+    /**
+     * liest das SDAT File
+     * @param path ist der Path für das SDAT File
+     */
     public void readSDAT(String path){
         //TODO Arbias weiss
         double temp = 0;
@@ -209,37 +223,54 @@ public class Reader{
 
     }
 
-
+    /**
+     * Exportiert als JSON mithilfe der GSON library
+     * @param path
+     * @throws IOException
+     */
     public void exportJSON(String path) throws IOException {
         Gson gson = new Gson();
         FileWriter fileWriter = new FileWriter(path);
         fileWriter.write(gson.toJson(gson.toJson(erzeugungMap)));
     }
 
+    /**
+     * getter für die Verbrauchs Map
+     * @return
+     */
     public TreeMap<Long, Messwert> getVerbrauchMap() {
         return verbrauchMap;
     }
 
-    public void setHasSDAT(boolean hasSDAT) {
-        this.hasSDAT = hasSDAT;
-    }
-
-    public void setHasESL(boolean hasESL) {
-        this.hasESL = hasESL;
-    }
-
+    /**
+     * getter für hasSDAT
+     * @return
+     */
     public boolean isHasSDAT() {
         return hasSDAT;
     }
 
+    /**
+     * getter für hasESL
+     * @return
+     */
     public boolean isHasESL() {
         return hasESL;
     }
 
+    /**
+     * getter für die erzeugungsMap
+     * @return
+     */
     public TreeMap<Long, Messwert> getErzeugungMap() {
         return erzeugungMap;
     }
 
+    /**
+     * exportiert als CSV
+     * @param name
+     * @throws IOException
+     */
     public void generateCSVFIle(String name) throws IOException{
         FileWriter writer = new FileWriter(name, false);
 

@@ -31,9 +31,13 @@ import java.util.TreeMap;
  * @version 0.18
  * @since 07.10.2021
  */
+
+
 public class GUI extends JFrame {
-    private Reader reader = new Reader();
-    private JFreeChart chart = ChartFactory.createTimeSeriesChart(
+    private Reader reader = new Reader(); //Reader Objekt
+
+
+    private JFreeChart chart = ChartFactory.createTimeSeriesChart( //
             "Electricity Monitoring", // Chart title
             "Zeit in Minuten", // X-Axis Label
             "KWH", // Y-Axis Label
@@ -42,6 +46,10 @@ public class GUI extends JFrame {
 
     private boolean absoluteZahlen = true;
 
+    /**
+     * Die main methode des Programms
+     * @param args
+     */
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             GUI example = new GUI();
@@ -58,11 +66,18 @@ public class GUI extends JFrame {
         });
     }
 
+    /**
+     * Der konstruktor des GUIS
+     * @throws HeadlessException
+     */
     public GUI() throws HeadlessException {
         super();
         init();
     }
 
+    /**
+     * Initialisiert das GUI
+     */
     public void init(){
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(new Color(0xFFFFFF));
@@ -317,6 +332,12 @@ public class GUI extends JFrame {
         setContentPane(panel);
     }
 
+    /**
+     * Erstellt das Dataset für den Chart
+     * @param verbrauchterStrom der verbrauchte Strom
+     * @param erzeugterStrom der erzeugte Strom
+     * @return
+     */
     private XYDataset createDataset(TreeMap<Long, Messwert> verbrauchterStrom, TreeMap<Long, Messwert> erzeugterStrom) {
 
         TimeSeries s1 = new TimeSeries("Verbrauchter Strom");
@@ -346,10 +367,19 @@ public class GUI extends JFrame {
         return dataset;
     }
 
+    /**
+     * Rechnet Time offset aus (für tage und 15 minuten Skip Buttons)
+     * @param offset der Offset
+     */
     private void addTimeOffset(double offset){
         setTime(chart.getXYPlot().getDomainAxis().getLowerBound()+offset, chart.getXYPlot().getDomainAxis().getUpperBound()+offset);
     }
 
+    /**
+     * Setzt die Zeit
+     * @param startTime die startzeit
+     * @param endTime die endzeit
+     */
     private void setTime(double startTime, double endTime){
         chart.getXYPlot().getDomainAxis().setUpperBound(endTime);
         chart.getXYPlot().getDomainAxis().setLowerBound(startTime);

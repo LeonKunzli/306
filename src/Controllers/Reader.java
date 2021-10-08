@@ -240,5 +240,7 @@ public class Reader{
         return erzeugungMap;
     }
 
+    public void exportCsv(String path){
 
+    }
 }

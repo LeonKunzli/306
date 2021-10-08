@@ -214,6 +214,28 @@ public class GUI extends JFrame {
 
         exportCSVButton.setPreferredSize(new Dimension(305, 80));
         exportJSONButton.setPreferredSize(new Dimension(305, 80));
+        exportCSVButton.addActionListener(e -> {
+            JFileChooser chooser = new JFileChooser();
+            FileNameExtensionFilter jsonFilter = new FileNameExtensionFilter("json files (*.json)", "json");
+            chooser.addChoosableFileFilter(jsonFilter);
+            chooser.setFileFilter(jsonFilter);
+            int dialogReturnValue = chooser.showSaveDialog(null);
+            if(dialogReturnValue==JFileChooser.APPROVE_OPTION) {
+                File file = chooser.getSelectedFile();
+                if (!file.getName().endsWith(".json")) {
+                    file = new File(file + ".json");
+                }
+                try {
+                    reader.exportJSON(file.toString());
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                    JOptionPane.showMessageDialog(null,
+                            "Etwas ist schief gegangen.", "Warnung", JOptionPane.WARNING_MESSAGE);
+                }
+                JOptionPane.showMessageDialog(null,
+                        "saved file as " + file.getAbsoluteFile());
+            }
+        });
         JRadioButton verbrauchsRadioButton = new JRadioButton("Verbrauchsdiagramm");
         verbrauchsRadioButton.setBackground(new Color(0xFFFFFF));
         verbrauchsRadioButton.setPreferredSize(new Dimension(500, 80));

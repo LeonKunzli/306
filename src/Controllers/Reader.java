@@ -240,7 +240,36 @@ public class Reader{
         return erzeugungMap;
     }
 
-    public void exportCsv(String path){
+    public void generateCSVFIle(String name) throws IOException{
+        FileWriter writer = new FileWriter(name, false);
+
+        writer.append("temps");
+        writer.append(';');
+        writer.append("value");
+        writer.append('\n');
+
+        for (Map.Entry<Long, Messwert> entry : verbrauchMap.entrySet()){
+            long key = entry.getKey();
+            Messwert value = entry.getValue();
+            double wert = value.getAbsoluterWert() + value.getRelativerWert();
+
+            String keyString = Long.toString(key);
+            String wertString = Double.toString(wert);
+
+            writer.append(keyString);
+            writer.append(';');
+            writer.append(wertString);
+            writer.append('\n');
+
+        }
+
+
+
+        System.out.println("CSV file is created...");
+
+        writer.flush();
+        writer.close();
+
 
     }
 }

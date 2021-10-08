@@ -28,6 +28,8 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * 306
@@ -237,5 +239,6 @@ public class Reader{
     public TreeMap<Long, Messwert> getErzeugungMap() {
         return erzeugungMap;
     }
+
 
 }

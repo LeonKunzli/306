@@ -3,6 +3,7 @@ package View;
 import Controllers.Reader;
 import Model.Messwert;
 import com.formdev.flatlaf.FlatIntelliJLaf;
+import com.google.gson.Gson;
 import org.jdesktop.swingx.JXDatePicker;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
@@ -38,6 +39,7 @@ public class GUI extends JFrame {
             "KWH", // Y-Axis Label
             null
     );
+
     private boolean absoluteZahlen = true;
 
     public static void main(String[] args) {
@@ -85,6 +87,7 @@ public class GUI extends JFrame {
         importPanel.setBackground(new Color(0xFFFFFF));
         importPanel.setPreferredSize(new Dimension(500,80));
         ChartPanel chartPanel = new ChartPanel(chart);
+        chartPanel.setPreferredSize(new Dimension(1920,700));
         JButton importESLButton = new JButton("Import ESL");
         JPanel skipPanel = new JPanel(new FlowLayout());
         skipPanel.setBackground(new Color(0xFFFFFF));
